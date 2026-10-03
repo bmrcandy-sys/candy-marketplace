@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Candy Marketplace</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#fff8f4;color:#222}
+header{background:#fff;padding:18px 6%;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5;box-shadow:0 2px 10px #00000010}
+.logo{font-size:24px;font-weight:800;color:#d94b78}.logo span{color:#333}
+.cart{border:0;background:#d94b78;color:#fff;padding:11px 16px;border-radius:25px;font-weight:bold;cursor:pointer}
+.hero{padding:55px 6%;background:linear-gradient(135deg,#ffe1eb,#fff1df);display:grid;grid-template-columns:1.4fr 1fr;gap:25px;align-items:center}
+.hero h1{font-size:46px;margin:0 0 12px}.hero p{font-size:18px;line-height:1.6;color:#555}.hero button{padding:13px 22px;border:0;border-radius:25px;background:#222;color:#fff;cursor:pointer}
+.section{padding:35px 6%}.section h2{text-align:center;margin-bottom:25px}
+.categories{display:flex;gap:10px;overflow:auto;padding-bottom:10px}.categories button{white-space:nowrap;border:1px solid #ddd;background:#fff;padding:10px 16px;border-radius:22px;cursor:pointer}
+.products{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.card{background:#fff;border-radius:15px;overflow:hidden;box-shadow:0 4px 18px #0000000d}.pic{height:180px;background:#f3e8e1;display:flex;align-items:center;justify-content:center;font-size:65px}.info{padding:15px}.info h3{margin:0 0 8px}.price{font-weight:800;font-size:18px;color:#d94b78}.buy{width:100%;margin-top:12px;padding:11px;border:0;border-radius:8px;background:#d94b78;color:#fff;cursor:pointer}
+footer{padding:30px 6%;background:#222;color:#fff;text-align:center;margin-top:20px}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;padding:20px}.box{background:#fff;max-width:520px;margin:40px auto;padding:25px;border-radius:18px;max-height:85vh;overflow:auto}.close{float:right;border:0;background:none;font-size:25px;cursor:pointer}
+input,textarea{width:100%;padding:12px;margin:7px 0 12px;border:1px solid #ddd;border-radius:8px}.order{background:#222;color:#fff;border:0;padding:13px 18px;border-radius:8px;width:100%;cursor:pointer}
+@media(max-width:800px){.hero{grid-template-columns:1fr}.hero h1{font-size:35px}.products{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:450px){.products{grid-template-columns:1fr}.pic{height:160px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Candy <span>Marketplace</span></div>
+  <button class="cart" onclick="openCart()">🛒 Cart (<span id="count">0</span>)</button>
+</header>
+
+<section class="hero">
+  <div>
+    <h1>Everything your home needs.</h1>
+    <p>Shop useful household items from Candy Marketplace and have your order delivered anywhere in Nigeria.</p>
+    <button onclick="document.getElementById('shop').scrollIntoView()">Shop Now</button>
+  </div>
+  <div style="text-align:center;font-size:110px">🏠🛍️</div>
+</section>
+
+<section class="section" id="shop">
+<h2>Shop Household Items</h2>
+<div class="categories">
+<button onclick="filter('all')">All</button><button onclick="filter('Kitchen')">Kitchen</button>
+<button onclick="filter('Cleaning')">Cleaning</button><button onclick="filter('Storage')">Storage</button>
+<button onclick="filter('Home')">Home & Living</button>
+</div>
+<br><div class="products" id="products"></div>
+</section>
+
+<footer>© 2026 Candy Marketplace · Household shopping made simple in Nigeria 🇳🇬</footer>
+
+<div class="modal" id="cartModal"><div class="box">
+<button class="close" onclick="closeCart()">×</button><h2>Your Cart</h2>
+<div id="cartItems"></div><hr><h3>Total: ₦<span id="total">0</span></h3>
+<button class="order" onclick="checkout()">Proceed to Checkout</button>
+</div></div>
+
+<div class="modal" id="checkoutModal"><div class="box">
+<button class="close" onclick="closeCheckout()">×</button><h2>Checkout</h2>
+<p>Please enter your delivery details.</p>
+<input id="name" placeholder="Full name">
+<input id="phone" placeholder="Phone number">
+<input id="address" placeholder="Delivery address">
+<input id="city" placeholder="City / State">
+<button class="order" onclick="placeOrder()">Place Order</button>
+</div></div>
+
+<script>
+const products=[
+{id:1,name:"Kitchen Storage Set",price:12000,cat:"Storage",emoji:"🥣"},
+{id:2,name:"Non-Stick Cooking Pot",price:18000,cat:"Kitchen",emoji:"🍲"},
+{id:3,name:"Cleaning Set",price:8500,cat:"Cleaning",emoji:"🧹"},
+{id:4,name:"Laundry Basket",price:9500,cat:"Storage",emoji:"🧺"},
+{id:5,name:"Bathroom Organizer",price:7000,cat:"Home",emoji:"🧴"},
+{id:6,name:"Food Storage Containers",price:10000,cat:"Kitchen",emoji:"🥡"},
+{id:7,name:"Decorative Table Lamp",price:15000,cat:"Home",emoji:"💡"},
+{id:8,name:"Home Waste Bin",price:6500,cat:"Cleaning",emoji:"🗑️"}
+];
+let cart=[];
+const naira=n=>n.toLocaleString("en-NG");
+function render(list=products){
+document.getElementById("products").innerHTML=list.map(p=>`<div class="card"><div class="pic">${p.emoji}</div><div class="info"><h3>${p.name}</h3><div class="price">₦${naira(p.price)}</div><button class="buy" onclick="add(${p.id})">Add to Cart</button></div></div>`).join("");
+}
+function filter(cat){render(cat==="all"?products:products.filter(p=>p.cat===cat))}
+function add(id){let p=products.find(x=>x.id===id);cart.push(p);update();alert(p.name+" added to cart.");}
+function update(){document.getElementById("count").textContent=cart.length}
+function openCart(){
+document.getElementById("cartModal").style.display="block";
+document.getElementById("cartItems").innerHTML=cart.length?cart.map((p,i)=>`<p>${p.emoji} ${p.name} — ₦${naira(p.price)} <button onclick="remove(${i})">Remove</button></p>`).join(""):"<p>Your cart is empty.</p>";
+document.getElementById("total").textContent=naira(cart.reduce((a,p)=>a+p.price,0));
+}
+function remove(i){cart.splice(i,1);update();openCart()}
+function closeCart(){document.getElementById("cartModal").style.display="none"}
+function checkout(){if(!cart.length)return alert("Your cart is empty.");closeCart();document.getElementById("checkoutModal").style.display="block"}
+function closeCheckout(){document.getElementById("checkoutModal").style.display="none"}
+function placeOrder(){
+let n=document.getElementById("name").value,p=document.getElementById("phone").value,a=document.getElementById("address").value,c=document.getElementById("city").value;
+if(!n||!p||!a||!c)return alert("Please complete all delivery details.");
+alert("Thank you, "+n+"! Your order has been received. We will contact you to confirm payment and delivery.");
+cart=[];update();closeCheckout();
+}
+render();
+</script>
+</body>
+</html>
